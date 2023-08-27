@@ -21,7 +21,7 @@ from transformers import (
 )
 from peft import LoraConfig, PeftModel
 from trl import SFTTrainer
-
+import time
 
 # %% Parameters
 
@@ -216,7 +216,7 @@ trainer = SFTTrainer(
     args=training_arguments,
     packing=packing,
 )
-
+# %%
 ################################################################################
 # Training
 ################################################################################
@@ -224,9 +224,8 @@ trainer = SFTTrainer(
 # Train model
 trainer.train()
 
-# Save trained model
+# Save trained model (this only save checkpoints)
 trainer.model.save_pretrained(new_model)
-
 
 # %%
 ################################################################################
@@ -238,13 +237,15 @@ logging.set_verbosity(logging.CRITICAL)
 
 # Run text generation pipeline with our next model
 prompt = "What is a large language model?"
+start_time = time.time()
 pipe = pipeline(task="text-generation", model=model, tokenizer=tokenizer, max_length=200)
 result = pipe(f"<s>[INST] {prompt} [/INST]")
+print(f"Generate time: {time.time() - start_time:.2f} seconds")  # 4 seconds
 print(result[0]['generated_text'])
 
 # %%
 ################################################################################
-# Store the new model
+# Store the new merged model
 ################################################################################
 
 # Reload model in FP16 and merge it with LoRA weights
@@ -263,12 +264,23 @@ tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
-# %%
+# Save merged model (This saved the full model)
+model = model.save_pretrained(new_model + '_full')
+
+
+# %% Push to hugging face hub
 ################################################################################
 # Push it to hugging face hub
 ################################################################################
 
 # !huggingface-cli login
+# model.push_to_hub(new_model, use_temp_dir=False)
+# tokenizer.push_to_hub(new_model, use_temp_dir=False)
 
-model.push_to_hub(new_model, use_temp_dir=False)
-tokenizer.push_to_hub(new_model, use_temp_dir=False)
+model.push_to_hub('p9chen/sft_qlora_llama2_7b_test', create_pr=1)
+tokenizer.push_to_hub('p9chen/sft_qlora_llama2_7b_test', create_pr=1)
+
+# %% Load saved model
+
+
+
