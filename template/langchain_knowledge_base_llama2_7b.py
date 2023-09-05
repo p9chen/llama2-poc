@@ -22,7 +22,6 @@ model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config = bnb
 
 # %%
 
-
 B_INST, E_INST = "[INST]", "[/INST]"
 B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
 DEFAULT_SYSTEM_PROMPT = """\
@@ -122,7 +121,6 @@ class ChessBot:
 chess_bot = ChessBot(memory=memory, prompt=prompt)
 
 bot = chess_bot.create_chat_bot()
-
 
 
 import gradio as gr
